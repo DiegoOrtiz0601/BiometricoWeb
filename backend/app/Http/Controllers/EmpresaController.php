@@ -118,4 +118,18 @@ class EmpresaController extends Controller
             'message' => 'Empresa eliminada exitosamente'
         ]);
     }
+
+    public function getActivas()
+    {
+        $empresas = DB::table('Empresa')
+            ->where('Estado', true)
+            ->select('IdEmpresa', 'Nombre')
+            ->orderBy('Nombre')
+            ->get();
+
+        return Response::json([
+            'status' => 'success',
+            'data' => $empresas
+        ]);
+    }
 } 

@@ -9,10 +9,8 @@ import {
     RiTeamLine,
     RiTimeLine,
     RiFileChartLine,
-    RiLayoutGridLine,
-    RiMapPin2Line
+    RiLayoutGridLine
 } from 'react-icons/ri';
-import { NavLink } from 'react-router-dom';
 
 const menuItems = [
     { path: '/dashboard', icon: RiDashboardLine, label: 'Dashboard' },
@@ -60,24 +58,6 @@ const Sidebar = () => {
                                 </motion.li>
                             );
                         })}
-                        <NavLink
-                            to="/empresas"
-                            className={({ isActive }) => `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
-                                isActive ? 'bg-vml-red text-white' : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                        >
-                            <RiBuilding2Line />
-                            <span>Empresas</span>
-                        </NavLink>
-                        <NavLink
-                            to="/sedes"
-                            className={({ isActive }) => `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
-                                isActive ? 'bg-vml-red text-white' : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                        >
-                            <RiMapPin2Line />
-                            <span>Sedes</span>
-                        </NavLink>
                     </ul>
                 </nav>
             </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CiudadController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\SedeController;
+use App\Http\Controllers\AreaController;
 
 Route::post('login', [AuthController::class, 'login']);
 
@@ -23,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('empresas', [EmpresaController::class, 'store']);
     Route::put('empresas/{id}', [EmpresaController::class, 'update']);
     Route::delete('empresas/{id}', [EmpresaController::class, 'destroy']);
+    Route::get('empresas/activas', [EmpresaController::class, 'getActivas']);
 
     // Rutas para Sedes
     Route::get('/sedes', [SedeController::class, 'index']);
@@ -31,4 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/sedes/{id}', [SedeController::class, 'destroy']);
     Route::get('/sedes/empresas', [SedeController::class, 'getEmpresas']);
     Route::get('/sedes/ciudades', [SedeController::class, 'getCiudades']);
+    Route::get('/sedes/empresa/{idEmpresa}', [SedeController::class, 'getSedesPorEmpresa']);
+
+    // Rutas para Áreas
+    Route::get('/areas', [AreaController::class, 'index']);
+    Route::post('/areas', [AreaController::class, 'store']);
+    Route::put('/areas/{id}', [AreaController::class, 'update']);
+    Route::delete('/areas/{id}', [AreaController::class, 'destroy']);
+    Route::get('/areas/sedes', [AreaController::class, 'getSedes']);
 }); 

@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Ciudades from './components/ciudades/Ciudades';
 import Empresas from './components/empresas/Empresas';
 import Sedes from './components/sedes/Sedes';
+import Areas from './components/areas/Areas';
 
 function App() {
     const isAuthenticated = localStorage.getItem('token');
@@ -21,6 +22,7 @@ function App() {
                     <Route path="/ciudades" element={<Ciudades />} />
                     <Route path="/empresas" element={<Empresas />} />
                     <Route path="/sedes" element={<Sedes />} />
+                    <Route path="/areas" element={<Areas />} />
                 </Route>
             </Routes>
         </Router>

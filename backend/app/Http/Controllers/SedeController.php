@@ -143,4 +143,19 @@ class SedeController extends Controller
 
         return Response::json($ciudades);
     }
+
+    public function getSedesPorEmpresa($idEmpresa)
+    {
+        $sedes = DB::table('Sede')
+            ->where('IdEmpresa', $idEmpresa)
+            ->where('Estado', true)
+            ->select('IdSede', 'Nombre')
+            ->orderBy('Nombre')
+            ->get();
+
+        return Response::json([
+            'status' => 'success',
+            'data' => $sedes
+        ]);
+    }
 } 
