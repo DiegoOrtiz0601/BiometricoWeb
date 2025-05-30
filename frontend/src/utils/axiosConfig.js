@@ -43,11 +43,13 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     (error) => {
-        console.error('Error en la respuesta:', {
+        console.error('Error detallado:', {
             status: error.response?.status,
             url: error.config?.url,
             data: error.response?.data,
-            error: error.message
+            message: error.message,
+            stack: error.stack,
+            fullError: error
         });
         
         if (error.response?.status === 401) {
