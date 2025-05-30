@@ -1,199 +1,191 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RiCloseLine } from 'react-icons/ri';
-import { FaSpinner } from 'react-icons/fa';
-import Swal from 'sweetalert2';
-import axiosInstance from '../../utils/axiosConfig';
 
-// Temporalmente usamos un objeto estático mientras se implementa el endpoint
-const DIAS_SEMANA = {
-    1: 'Lunes',
-    2: 'Martes',
-    3: 'Miércoles',
-    4: 'Jueves',
-    5: 'Viernes',
-    6: 'Sábado',
-    7: 'Domingo'
-};
+const diasSemana = [
+    { id: 1, nombre: 'Domingo' },
+    { id: 2, nombre: 'Lunes' },
+    { id: 3, nombre: 'Martes' },
+    { id: 4, nombre: 'Miércoles' },
+    { id: 5, nombre: 'Jueves' },
+    { id: 6, nombre: 'Viernes' },
+    { id: 7, nombre: 'Sábado' }
+];
 
 const DetalleHorarioModal = ({ horario, onClose }) => {
     const [detalles, setDetalles] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const cargarDetalles = async () => {
-            try {
-                setLoading(true);
-                // Usamos la ruta que existe en el backend con el ID específico
-                const response = await axiosInstance.get('/asignacion-horarios', {
-                    params: {
-                        horario_id: horario.id,
-                        perPage: 1 // Solo necesitamos un registro
-                    }
-                });
+        if (horario?.detalles) {
+            console.log('Horario recibido:', horario);
+            console.log('Detalles recibidos:', horario.detalles);
+            
+            // Mapear los detalles con los nombres de los días
+            const detallesConDias = horario.detalles.map(detalle => {
+                const idDia = parseInt(detalle.id_dia_semana || detalle.DiaSemana);
+                console.log('ID del día a buscar:', idDia);
                 
-                if (response.data.success && response.data.data.length > 0) {
-                    const horarioConDetalles = response.data.data[0];
-                    if (horarioConDetalles.detalles && horarioConDetalles.detalles.length > 0) {
-                        const detallesConDias = horarioConDetalles.detalles.map(detalle => ({
-                            ...detalle,
-                            nombreDia: DIAS_SEMANA[detalle.id_dia_semana]
-                        }));
-                        setDetalles(detallesConDias);
-                        console.log('Detalles cargados:', detallesConDias);
-                    } else {
-                        console.log('El horario no tiene detalles configurados');
-                        setDetalles([]);
-                    }
-                } else {
-                    console.log('No se encontró el horario o la respuesta no fue exitosa');
-                    setDetalles([]);
-                }
-            } catch (error) {
-                console.error('Error al cargar detalles:', error);
-                console.log('Datos del horario:', horario);
-                setDetalles([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+                const dia = diasSemana.find(d => d.id === idDia);
+                console.log('Día encontrado:', dia);
 
-        if (horario?.id) {
-            cargarDetalles();
-        } else {
-            console.log('No hay ID de horario disponible');
+                return {
+                    ...detalle,
+                    DiaSemana: idDia,
+                    HoraInicio: detalle.hora_inicio || detalle.HoraInicio,
+                    HoraFin: detalle.hora_fin || detalle.HoraFin,
+                    nombreDia: dia ? dia.nombre : `Día no especificado (ID: ${idDia})`
+                };
+            });
+            
+            console.log('Detalles procesados:', detallesConDias);
+            setDetalles(detallesConDias);
         }
     }, [horario]);
 
-    if (!horario) return null;
-
     const formatTime = (time) => {
         if (!time) return '';
-        return new Date(`2000-01-01T${time}`).toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+        try {
+            const [hours, minutes] = time.split(':');
+            const date = new Date();
+            date.setHours(parseInt(hours));
+            date.setMinutes(parseInt(minutes));
+            return date.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (error) {
+            console.error('Error al formatear hora:', error);
+            return time;
+        }
     };
+
+    if (!horario) return null;
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto"
+            onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl relative my-6">
-                <div className="p-6">
+            <motion.div 
+                className="bg-white rounded-lg shadow-xl w-full max-w-4xl relative my-8 max-h-[90vh] overflow-y-auto"
+                initial={{ y: -20 }}
+                animate={{ y: 0 }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+                    <h2 className="text-2xl font-bold text-gray-800">Detalles del Horario</h2>
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
                         <RiCloseLine className="text-2xl" />
                     </button>
+                </div>
 
-                    <h2 className="text-2xl font-bold mb-6">Detalles del Horario</h2>
-                    
+                <div className="p-6">
                     {/* Información del empleado */}
                     <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                        <h3 className="font-medium text-gray-700 mb-3">Datos del Empleado</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <h3 className="font-medium text-gray-700 mb-3 flex items-center">
+                            <span className="w-2 h-2 bg-vml-red rounded-full mr-2"></span>
+                            Datos del Empleado
+                        </h3>
+                        <dl className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="font-semibold text-gray-600">Nombre:</p>
-                                <p className="text-gray-800">{horario.empleado.nombre_completo}</p>
+                                <dt className="text-gray-600">Nombre:</dt>
+                                <dd className="text-gray-800 font-medium">{horario.empleado?.nombre_completo}</dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Documento:</p>
-                                <p className="text-gray-800">{horario.empleado.documento}</p>
+                                <dt className="text-gray-600">Documento:</dt>
+                                <dd className="text-gray-800 font-medium">{horario.empleado?.documento}</dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Empresa:</p>
-                                <p className="text-gray-800">{horario.empleado.empresa}</p>
+                                <dt className="text-gray-600">Empresa:</dt>
+                                <dd className="text-gray-800 font-medium">{horario.empleado?.empresa}</dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Tipo de Empleado:</p>
-                                <p className="text-gray-800">{horario.empleado.tipo_empleado}</p>
+                                <dt className="text-gray-600">Tipo:</dt>
+                                <dd className="text-gray-800 font-medium">{horario.empleado?.tipo_empleado}</dd>
                             </div>
-                        </div>
+                        </dl>
                     </div>
 
                     {/* Información del horario */}
                     <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                        <h3 className="font-medium text-gray-700 mb-3">Datos del Horario</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <h3 className="font-medium text-gray-700 mb-3 flex items-center">
+                            <span className="w-2 h-2 bg-vml-red rounded-full mr-2"></span>
+                            Datos del Horario
+                        </h3>
+                        <dl className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="font-semibold text-gray-600">Fecha Inicio:</p>
-                                <p className="text-gray-800">{new Date(horario.fecha_inicio).toLocaleDateString()}</p>
+                                <dt className="text-gray-600">Fecha Inicio:</dt>
+                                <dd className="text-gray-800 font-medium">
+                                    {new Date(horario.fecha_inicio).toLocaleDateString()}
+                                </dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Fecha Fin:</p>
-                                <p className="text-gray-800">{new Date(horario.fecha_fin).toLocaleDateString()}</p>
+                                <dt className="text-gray-600">Fecha Fin:</dt>
+                                <dd className="text-gray-800 font-medium">
+                                    {new Date(horario.fecha_fin).toLocaleDateString()}
+                                </dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Estado:</p>
-                                <span className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                                    horario.estado === "1" ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {horario.estado === "1" ? 'Activo' : 'Inactivo'}
-                                </span>
+                                <dt className="text-gray-600">Tipo de Horario:</dt>
+                                <dd className="text-gray-800 font-medium">
+                                    {horario.tipo_horario === 1 ? 'ENROLADO NO MARCA' : 'ENROLADO ROTATIVO'}
+                                </dd>
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-600">Tipo de Horario:</p>
-                                <p className="text-gray-800">{horario.tipo_horario || '1'}</p>
+                                <dt className="text-gray-600">Estado:</dt>
+                                <dd className="text-gray-800 font-medium">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                        horario.estado === "1" ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    }`}>
+                                        {horario.estado === "1" ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </dd>
                             </div>
-                        </div>
+                        </dl>
                     </div>
 
-                    {/* Detalles del horario por día */}
+                    {/* Detalles de los horarios por día */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-gray-700 mb-3">Horarios por Día</h3>
-                        {loading ? (
-                            <div className="flex justify-center items-center py-8">
-                                <FaSpinner className="animate-spin text-2xl text-vml-red" />
-                            </div>
-                        ) : detalles.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-gray-500 mb-2">No hay detalles de horario configurados</p>
-                                <p className="text-sm text-gray-400">
-                                    Los detalles del horario se mostrarán aquí una vez que sean configurados.
-                                </p>
-                            </div>
+                        <h3 className="font-medium text-gray-700 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-vml-red rounded-full mr-2"></span>
+                            Horarios por Día
+                        </h3>
+                        {detalles.length === 0 ? (
+                            <p className="text-gray-600 text-center py-4">No hay horarios configurados</p>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {detalles.map((detalle) => (
                                     <div 
-                                        key={detalle.id_dia_semana || detalle.diaSemana} 
-                                        className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"
+                                        key={detalle.DiaSemana} 
+                                        className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                                     >
-                                        <h4 className="font-medium text-gray-800 mb-2">
-                                            {detalle.nombreDia || 'Día no especificado'}
+                                        <h4 className="font-medium text-gray-800 mb-2 pb-2 border-b border-gray-100">
+                                            {detalle.nombreDia}
                                         </h4>
                                         <div className="space-y-1 text-sm">
-                                            <p>
-                                                <span className="text-gray-600">Entrada:</span>{' '}
-                                                <span className="font-medium">{formatTime(detalle.hora_inicio || detalle.horaInicio)}</span>
-                                            </p>
-                                            <p>
-                                                <span className="text-gray-600">Salida:</span>{' '}
-                                                <span className="font-medium">{formatTime(detalle.hora_fin || detalle.horaFin)}</span>
-                                            </p>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600">Entrada:</span>
+                                                <span className="font-medium">{formatTime(detalle.HoraInicio)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600">Salida:</span>
+                                                <span className="font-medium">{formatTime(detalle.HoraFin)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-
-                    <div className="mt-6 flex justify-end">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                        >
-                            Cerrar
-                        </button>
-                    </div>
                 </div>
-            </div>
+            </motion.div>
         </motion.div>
     );
 };

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RiAddLine, RiSearchLine, RiEditLine, RiDeleteBin6Line, RiArrowUpSLine, RiArrowDownSLine, RiEyeLine, RiCloseLine } from 'react-icons/ri';
+import { RiAddLine, RiSearchLine, RiEditLine, RiDeleteBin6Line, RiArrowUpSLine, RiArrowDownSLine, RiEyeLine, RiCloseLine, RiUploadLine } from 'react-icons/ri';
 import { FaSpinner } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosConfig';
 import HorarioForm from './HorarioForm';
 import DetalleHorarioModal from './DetalleHorarioModal';
+import CargaMasivaHorarios from './CargaMasivaHorarios';
 import { LoadingOverlay, TableLoadingRow, EmptyRow, LoadingButton } from '../common/LoadingStates';
 import { debounce } from 'lodash';
 
@@ -17,6 +18,7 @@ const Horarios = () => {
     const [horarios, setHorarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [showCargaMasiva, setShowCargaMasiva] = useState(false);
     const [editingHorario, setEditingHorario] = useState(null);
     const [showDetalle, setShowDetalle] = useState(false);
     const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
@@ -189,17 +191,29 @@ const Horarios = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Asignación de Horarios</h1>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                        setEditingHorario(null);
-                        setShowForm(true);
-                    }}
-                    className="bg-vml-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center"
-                >
-                    <RiAddLine className="mr-2" /> Nuevo Horario
-                </motion.button>
+                <div className="flex gap-3">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowCargaMasiva(true)}
+                        className="bg-vml-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+                    >
+                        <RiUploadLine className="text-xl" />
+                        Cargar Horarios
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                            setEditingHorario(null);
+                            setShowForm(true);
+                        }}
+                        className="bg-vml-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+                    >
+                        <RiAddLine className="text-xl" />
+                        Nuevo Horario
+                    </motion.button>
+                </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-md mb-6 relative">
@@ -438,13 +452,19 @@ const Horarios = () => {
                         horarioToEdit={editingHorario}
                     />
                 )}
-                {showDetalle && (
+                {showDetalle && horarioSeleccionado && (
                     <DetalleHorarioModal
                         horario={horarioSeleccionado}
                         onClose={() => {
                             setShowDetalle(false);
                             setHorarioSeleccionado(null);
                         }}
+                    />
+                )}
+                {showCargaMasiva && (
+                    <CargaMasivaHorarios
+                        onClose={() => setShowCargaMasiva(false)}
+                        onSuccess={fetchHorarios}
                     />
                 )}
             </AnimatePresence>

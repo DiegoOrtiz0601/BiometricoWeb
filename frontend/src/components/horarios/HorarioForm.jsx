@@ -5,13 +5,13 @@ import axiosInstance from '../../utils/axiosConfig';
 import Swal from 'sweetalert2';
 
 const diasSemana = [
-    { id: 1, nombre: 'Lunes' },
-    { id: 2, nombre: 'Martes' },
-    { id: 3, nombre: 'Miércoles' },
-    { id: 4, nombre: 'Jueves' },
-    { id: 5, nombre: 'Viernes' },
-    { id: 6, nombre: 'Sábado' },
-    { id: 7, nombre: 'Domingo' }
+    { id: 2, nombre: 'Lunes' },
+    { id: 3, nombre: 'Martes' },
+    { id: 4, nombre: 'Miércoles' },
+    { id: 5, nombre: 'Jueves' },
+    { id: 6, nombre: 'Viernes' },
+    { id: 7, nombre: 'Sábado' },
+    { id: 1, nombre: 'Domingo' }
 ];
 
 const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
@@ -46,6 +46,23 @@ const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
                 Estado: horarioToEdit.estado === "1",
                 TipoHorario: horarioToEdit.tipo_horario || ''
             }));
+
+            // Mapear los detalles existentes a los días de la semana
+            const nuevosDetalles = diasSemana.map(dia => {
+                const detalleExistente = horarioToEdit.detalles?.find(
+                    d => d.dia_semana === dia.id || d.DiaSemana === dia.id
+                );
+
+                return {
+                    diaSemana: dia.id,
+                    horaInicio: detalleExistente ? (detalleExistente.hora_inicio || detalleExistente.HoraInicio) : '',
+                    horaFin: detalleExistente ? (detalleExistente.hora_fin || detalleExistente.HoraFin) : '',
+                    activo: !!detalleExistente
+                };
+            });
+
+            setDetallesHorario(nuevosDetalles);
+            console.log('Detalles cargados:', nuevosDetalles);
         }
         cargarTiposHorario();
     }, [horarioToEdit]);
@@ -124,13 +141,19 @@ const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
             let response;
             const datosEnvio = {
                 ...formData,
-                detalles: detallesActivos
+                detalles: detallesActivos.map(detalle => ({
+                    DiaSemana: detalle.diaSemana,
+                    HoraInicio: detalle.horaInicio,
+                    HoraFin: detalle.horaFin
+                }))
             };
 
+            console.log('Datos a enviar:', datosEnvio);
+
             if (horarioToEdit) {
-                response = await axiosInstance.put(`/horarios/${horarioToEdit.id}`, datosEnvio);
+                response = await axiosInstance.put(`/asignacion-horarios/${horarioToEdit.id}`, datosEnvio);
             } else {
-                response = await axiosInstance.post('/horarios', datosEnvio);
+                response = await axiosInstance.post('/asignacion-horarios', datosEnvio);
             }
 
             if (response.data.success) {
@@ -146,7 +169,7 @@ const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Hubo un error al guardar el horario'
+                text: error.response?.data?.message || 'Hubo un error al guardar el horario'
             });
         } finally {
             setLoading(false);
@@ -208,7 +231,7 @@ const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
                                         </div>
                                     </div>
                                 )}
-
+                            
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -239,38 +262,9 @@ const HorarioForm = ({ onSubmit, onClose, horarioToEdit }) => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Tipo de Horario
-                                    </label>
-                                    <select
-                                        name="TipoHorario"
-                                        value={formData.TipoHorario}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-vml-red"
-                                        required
-                                    >
-                                        <option value="">Seleccione un tipo</option>
-                                        {tiposHorario.map(tipo => (
-                                            <option key={tipo.id} value={tipo.id}>
-                                                {tipo.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                              
 
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        name="Estado"
-                                        checked={formData.Estado}
-                                        onChange={handleChange}
-                                        className="h-4 w-4 text-vml-red focus:ring-vml-red border-gray-300 rounded"
-                                    />
-                                    <label className="ml-2 block text-sm text-gray-900">
-                                        Activo
-                                    </label>
-                                </div>
+                                
                             </div>
 
                             {/* Panel derecho: Configuración de días */}

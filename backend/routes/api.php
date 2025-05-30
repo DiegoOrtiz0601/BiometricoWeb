@@ -8,8 +8,11 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\EmpleadoController;
+use App\Http\Controllers\AsignacionHorarioController;
+use App\Http\Controllers\DashboardController;
 
 Route::post('login', [AuthController::class, 'login']);
+Route::get('formatos/plantilla_horarios.csv', [AsignacionHorarioController::class, 'descargarPlantilla']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -50,4 +53,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/empleados/{id}', [EmpleadoController::class, 'update']);
     Route::delete('/empleados/{id}', [EmpleadoController::class, 'destroy']);
     Route::get('/empleados/tipos', [EmpleadoController::class, 'getTiposEmpleado']);
+    Route::get('/empleados/buscar', [EmpleadoController::class, 'buscar']);
+    Route::get('/empleados/{id}', [EmpleadoController::class, 'show']);
+
+    // Rutas para Asignación de Horarios
+    Route::get('/asignacion-horarios', [AsignacionHorarioController::class, 'index']);
+    Route::get('/asignacion-horarios/template', [AsignacionHorarioController::class, 'downloadTemplate']);
+    Route::post('/asignacion-horarios/carga-masiva', [AsignacionHorarioController::class, 'uploadFile']);
+    Route::post('/asignacion-horarios', [AsignacionHorarioController::class, 'store']);
+    Route::put('/asignacion-horarios/{id}', [AsignacionHorarioController::class, 'update']);
+    Route::delete('/asignacion-horarios/{id}', [AsignacionHorarioController::class, 'destroy']);
+
+    // Rutas para Dashboard
+    Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
 }); 

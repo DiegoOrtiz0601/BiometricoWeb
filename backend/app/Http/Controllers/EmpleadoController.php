@@ -54,6 +54,48 @@ class EmpleadoController extends Controller
         return Response::json($empleados);
     }
 
+    public function buscar(Request $request)
+    {
+        if (!$request->has('documento') || empty($request->documento)) {
+            return Response::json([
+                'success' => false,
+                'message' => 'El documento es requerido'
+            ], 400);
+        }
+
+        $empleado = DB::table('Empleados')
+            ->join('tipos_empleado', 'Empleados.IdTipoEmpleado', '=', 'tipos_empleado.id')
+            ->join('Empresa', 'Empleados.IdEmpresa', '=', 'Empresa.IdEmpresa')
+            ->select(
+                'Empleados.IdEmpleado',
+                'Empleados.Nombres',
+                'Empleados.Apellidos',
+                'Empleados.Documento',
+                'Empleados.Estado',
+                'Empleados.IdEmpresa',
+                'Empleados.IdTipoEmpleado',
+                'Empresa.Nombre as empresa',
+                'tipos_empleado.nombre as tipoEmpleado'
+            )
+            ->where('Empleados.Documento', '=', $request->documento)
+            ->first();
+
+        if (!$empleado) {
+            return Response::json([
+                'success' => false,
+                'message' => 'No se encontró ningún empleado con ese documento'
+            ], 404);
+        }
+
+        // Convertir el estado a booleano
+        $empleado->Estado = (bool) $empleado->Estado;
+
+        return Response::json([
+            'success' => true,
+            'data' => $empleado
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -166,6 +208,38 @@ class EmpleadoController extends Controller
         return Response::json([
             'status' => 'success',
             'data' => $tipos
+        ]);
+    }
+
+    public function show($id)
+    {
+        $empleado = DB::table('Empleados')
+            ->join('tipos_empleado', 'Empleados.IdTipoEmpleado', '=', 'tipos_empleado.id')
+            ->join('Empresa', 'Empleados.IdEmpresa', '=', 'Empresa.IdEmpresa')
+            ->select(
+                'Empleados.IdEmpleado',
+                'Empleados.Nombres',
+                'Empleados.Apellidos',
+                'Empleados.Documento',
+                'Empleados.Estado',
+                'Empleados.IdEmpresa',
+                'Empleados.IdTipoEmpleado',
+                'Empresa.Nombre as empresa',
+                'tipos_empleado.nombre as tipoEmpleado'
+            )
+            ->where('Empleados.IdEmpleado', '=', $id)
+            ->first();
+
+        if (!$empleado) {
+            return Response::json([
+                'success' => false,
+                'message' => 'No se encontró el empleado'
+            ], 404);
+        }
+
+        return Response::json([
+            'success' => true,
+            'data' => $empleado
         ]);
     }
 } 

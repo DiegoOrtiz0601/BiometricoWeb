@@ -98,7 +98,7 @@ const Login = () => {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <img 
-            src="/vml-logo.png" 
+            src="/logo.gif" 
             alt="VML Holding" 
             className="h-12"
           />
