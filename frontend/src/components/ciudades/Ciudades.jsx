@@ -25,6 +25,9 @@ const Ciudades = () => {
     const fetchCiudades = async () => {
         try {
             setLoading(true);
+            console.log('Iniciando petición de ciudades...');
+            console.log('Token actual:', localStorage.getItem('token'));
+            
             const response = await axiosInstance.get('/ciudades', {
                 params: {
                     page: pagination.currentPage,
@@ -34,6 +37,8 @@ const Ciudades = () => {
                     sortDirection
                 }
             });
+            
+            console.log('Respuesta del servidor:', response.data);
             setCiudades(response.data.data);
             setPagination({
                 currentPage: response.data.current_page,
@@ -42,7 +47,7 @@ const Ciudades = () => {
                 total: response.data.total
             });
         } catch (error) {
-            console.error('Error al cargar ciudades:', error);
+            console.error('Error detallado al cargar ciudades:', error.response || error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -205,7 +210,7 @@ const Ciudades = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <TableLoadingRow colSpan={3} />
-                            ) : ciudades.length === 0 ? (
+                            ) : !ciudades || ciudades.length === 0 ? (
                                 <EmptyRow colSpan={3} message="No se encontraron ciudades" />
                             ) : (
                                 <AnimatePresence mode="popLayout">

@@ -1,7 +1,3 @@
-import { defineConfig } from 'vite';
-import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
-
 export default defineConfig({
     plugins: [
         laravel({
@@ -10,4 +6,16 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    server: {
+        cors: true,
+        port: 5173,
+        proxy: {
+            '/api': {
+                target: 'http://localhost:8000',
+                changeOrigin: true,
+                secure: false,
+                // ws: true, // opcional si usas websockets
+            },
+        },
+    },
 });
