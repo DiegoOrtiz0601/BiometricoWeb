@@ -9,6 +9,7 @@ import Empresas from './components/empresas/Empresas';
 import Sedes from './components/sedes/Sedes';
 import Areas from './components/areas/Areas';
 import Empleados from './components/empleados/Empleados';
+import Horarios from './components/horarios/Horarios';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ function AppRoutes() {
                 <Route path="/sedes" element={<Sedes />} />
                 <Route path="/areas" element={<Areas />} />
                 <Route path="/empleados" element={<Empleados />} />
+                <Route path="/horarios" element={<Horarios />} />
             </Route>
         </Routes>
     );

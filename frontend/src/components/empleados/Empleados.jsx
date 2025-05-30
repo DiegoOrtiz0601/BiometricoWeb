@@ -231,7 +231,7 @@ const Empleados = () => {
                 </div>
 
                 <div className="overflow-x-auto relative">
-                    {loading && <LoadingOverlay message="Cargando empleados..." />}
+                    
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
