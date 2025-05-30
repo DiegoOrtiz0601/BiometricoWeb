@@ -164,4 +164,19 @@ class AreaController extends Controller
             ], 500);
         }
     }
+
+    public function getAreasPorSede($idSede)
+    {
+        $areas = DB::table('Areas')
+            ->where('IdSede', $idSede)
+            ->where('Estado', true)
+            ->select('IdArea', 'Nombre')
+            ->orderBy('Nombre')
+            ->get();
+
+        return Response::json([
+            'status' => 'success',
+            'data' => $areas
+        ]);
+    }
 } 

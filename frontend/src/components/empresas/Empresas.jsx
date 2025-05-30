@@ -4,10 +4,12 @@ import { RiAddLine, RiSearchLine, RiEditLine, RiDeleteBin6Line, RiArrowUpSLine, 
 import Swal from 'sweetalert2';
 import EmpresaForm from './EmpresaForm';
 import axiosInstance from '../../utils/axiosConfig';
+import { LoadingOverlay, TableLoadingRow, EmptyRow, LoadingButton } from '../common/LoadingStates';
 
 const Empresas = () => {
     const [empresas, setEmpresas] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingAction, setLoadingAction] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingEmpresa, setEditingEmpresa] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,19 +68,20 @@ const Empresas = () => {
 
     const handleSubmit = async (formData) => {
         try {
+            setLoadingAction(true);
             if (editingEmpresa) {
                 await axiosInstance.put(`/empresas/${editingEmpresa.IdEmpresa}`, formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Empresa actualizada correctamente'
+                    title: 'Éxito',
+                    text: 'Empresa actualizada exitosamente'
                 });
             } else {
                 await axiosInstance.post('/empresas', formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Empresa creada correctamente'
+                    title: 'Éxito',
+                    text: 'Empresa creada exitosamente'
                 });
             }
             setShowForm(false);
@@ -91,6 +94,8 @@ const Empresas = () => {
                 title: 'Error',
                 text: 'Hubo un error al procesar la solicitud'
             });
+        } finally {
+            setLoadingAction(false);
         }
     };
 
@@ -137,18 +142,22 @@ const Empresas = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Gestión de Empresas</h1>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-vml-red text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    onClick={() => setShowForm(true)}
+                <LoadingButton
+                    onClick={() => {
+                        setEditingEmpresa(null);
+                        setShowForm(true);
+                    }}
+                    className="bg-vml-red hover:bg-vml-red/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    loading={loadingAction}
                 >
                     <RiAddLine />
                     <span>Nueva Empresa</span>
-                </motion.button>
+                </LoadingButton>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md mb-6">
+            <div className="bg-white rounded-lg shadow-md mb-6 relative">
+                {loadingAction && <LoadingOverlay message="Procesando..." />}
+                
                 <div className="p-4 border-b">
                     <div className="flex items-center space-x-2">
                         <RiSearchLine className="text-gray-400" />
@@ -158,6 +167,7 @@ const Empresas = () => {
                             className="w-full px-3 py-2 border-none focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
                 </div>
@@ -209,57 +219,59 @@ const Empresas = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-center">
-                                        Cargando...
-                                    </td>
-                                </tr>
+                                <TableLoadingRow colSpan={5} />
                             ) : empresas.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                                        No se encontraron empresas
-                                    </td>
-                                </tr>
+                                <EmptyRow colSpan={5} message="No se encontraron empresas" />
                             ) : (
-                                empresas.map((empresa) => (
-                                    <tr key={empresa.IdEmpresa}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {empresa.Nombre}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {empresa.Direccion}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {empresa.Telefono}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
-                                                empresa.Estado 
-                                                ? 'bg-green-200 text-green-900 border-2 border-green-400' 
-                                                : 'bg-red-200 text-red-900 border-2 border-red-400'
-                                            }`}>
-                                                {empresa.Estado ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingEmpresa(empresa);
-                                                    setShowForm(true);
-                                                }}
-                                                className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
-                                            >
-                                                <RiEditLine className="text-xl" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(empresa.IdEmpresa)}
-                                                className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
-                                            >
-                                                <RiDeleteBin6Line className="text-xl" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                <AnimatePresence mode="popLayout">
+                                    {empresas.map((empresa) => (
+                                        <motion.tr
+                                            key={empresa.IdEmpresa}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -20 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {empresa.Nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {empresa.Direccion}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {empresa.Telefono}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
+                                                    empresa.Estado 
+                                                    ? 'bg-green-200 text-green-900 border-2 border-green-400' 
+                                                    : 'bg-red-200 text-red-900 border-2 border-red-400'
+                                                }`}>
+                                                    {empresa.Estado ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                <LoadingButton
+                                                    onClick={() => {
+                                                        setEditingEmpresa(empresa);
+                                                        setShowForm(true);
+                                                    }}
+                                                    className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
+                                                    loading={loadingAction}
+                                                    title="Editar"
+                                                >
+                                                    <RiEditLine className="text-xl" />
+                                                </LoadingButton>
+                                                <button
+                                                    onClick={() => handleDelete(empresa.IdEmpresa)}
+                                                    className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
+                                                >
+                                                    <RiDeleteBin6Line className="text-xl" />
+                                                </button>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
                             )}
                         </tbody>
                     </table>
@@ -271,9 +283,7 @@ const Empresas = () => {
                     </div>
                     <div className="flex space-x-1">
                         {/* Botón Primera Página */}
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: 1 }))}
                             disabled={pagination.currentPage === 1}
                             className={`px-3 py-1 rounded ${
@@ -281,9 +291,10 @@ const Empresas = () => {
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loadingAction}
                         >
                             «
-                        </motion.button>
+                        </LoadingButton>
 
                         {/* Números de Página */}
                         {Array.from({ length: pagination.lastPage }, (_, i) => i + 1)
@@ -302,26 +313,23 @@ const Empresas = () => {
                                 }
 
                                 return (
-                                    <motion.button
+                                    <LoadingButton
                                         key={pageNum}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
                                         className={`px-3 py-1 rounded ${
                                             pagination.currentPage === pageNum
                                                 ? 'bg-vml-red text-white'
                                                 : 'bg-white text-gray-700 hover:bg-gray-50 border'
                                         }`}
+                                        loading={loadingAction}
                                     >
                                         {pageNum}
-                                    </motion.button>
+                                    </LoadingButton>
                                 );
                             })}
 
                         {/* Botón Última Página */}
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.lastPage }))}
                             disabled={pagination.currentPage === pagination.lastPage}
                             className={`px-3 py-1 rounded ${
@@ -329,9 +337,10 @@ const Empresas = () => {
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loadingAction}
                         >
                             »
-                        </motion.button>
+                        </LoadingButton>
                     </div>
                 </div>
             </div>

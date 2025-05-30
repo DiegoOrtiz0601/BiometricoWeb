@@ -4,10 +4,12 @@ import { RiAddLine, RiSearchLine, RiEditLine, RiDeleteBin6Line, RiArrowUpSLine, 
 import Swal from 'sweetalert2';
 import CiudadForm from './CiudadForm';
 import axiosInstance from '../../utils/axiosConfig';
+import { LoadingOverlay, TableLoadingRow, EmptyRow, LoadingButton } from '../common/LoadingStates';
 
 const Ciudades = () => {
     const [ciudades, setCiudades] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingAction, setLoadingAction] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingCiudad, setEditingCiudad] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,19 +68,20 @@ const Ciudades = () => {
 
     const handleSubmit = async (formData) => {
         try {
+            setLoadingAction(true);
             if (editingCiudad) {
                 await axiosInstance.put(`/ciudades/${editingCiudad.IdCiudad}`, formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Ciudad actualizada correctamente'
+                    title: 'Éxito',
+                    text: 'Ciudad actualizada exitosamente'
                 });
             } else {
                 await axiosInstance.post('/ciudades', formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Ciudad creada correctamente'
+                    title: 'Éxito',
+                    text: 'Ciudad creada exitosamente'
                 });
             }
             setShowForm(false);
@@ -91,6 +94,8 @@ const Ciudades = () => {
                 title: 'Error',
                 text: 'Hubo un error al procesar la solicitud'
             });
+        } finally {
+            setLoadingAction(false);
         }
     };
 
@@ -108,11 +113,12 @@ const Ciudades = () => {
 
         if (result.isConfirmed) {
             try {
+                setLoadingAction(true);
                 await axiosInstance.delete(`/ciudades/${id}`);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Eliminado!',
-                    text: 'La ciudad ha sido eliminada'
+                    title: 'Éxito',
+                    text: 'Ciudad eliminada exitosamente'
                 });
                 fetchCiudades();
             } catch (error) {
@@ -122,6 +128,8 @@ const Ciudades = () => {
                     title: 'Error',
                     text: 'No se pudo eliminar la ciudad'
                 });
+            } finally {
+                setLoadingAction(false);
             }
         }
     };
@@ -137,18 +145,22 @@ const Ciudades = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Gestión de Ciudades</h1>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-vml-red text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    onClick={() => setShowForm(true)}
+                <LoadingButton
+                    onClick={() => {
+                        setEditingCiudad(null);
+                        setShowForm(true);
+                    }}
+                    className="bg-vml-red hover:bg-vml-red/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    loading={loadingAction}
                 >
                     <RiAddLine />
                     <span>Nueva Ciudad</span>
-                </motion.button>
+                </LoadingButton>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md mb-6">
+            <div className="bg-white rounded-lg shadow-md mb-6 relative">
+                {loadingAction && <LoadingOverlay message="Procesando..." />}
+                
                 <div className="p-4 border-b">
                     <div className="flex items-center space-x-2">
                         <RiSearchLine className="text-gray-400" />
@@ -158,6 +170,7 @@ const Ciudades = () => {
                             className="w-full px-3 py-2 border-none focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
                 </div>
@@ -191,51 +204,57 @@ const Ciudades = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="3" className="px-6 py-4 text-center">
-                                        Cargando...
-                                    </td>
-                                </tr>
+                                <TableLoadingRow colSpan={3} />
                             ) : ciudades.length === 0 ? (
-                                <tr>
-                                    <td colSpan="3" className="px-6 py-4 text-center text-gray-500">
-                                        No se encontraron ciudades
-                                    </td>
-                                </tr>
+                                <EmptyRow colSpan={3} message="No se encontraron ciudades" />
                             ) : (
-                                ciudades.map((ciudad) => (
-                                    <tr key={ciudad.IdCiudad}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {ciudad.Nombre}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
-                                                ciudad.Estado 
-                                                ? 'bg-green-200 text-green-900 border-2 border-green-400' 
-                                                : 'bg-red-200 text-red-900 border-2 border-red-400'
-                                            }`}>
-                                                {ciudad.Estado ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingCiudad(ciudad);
-                                                    setShowForm(true);
-                                                }}
-                                                className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
-                                            >
-                                                <RiEditLine className="text-xl" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(ciudad.IdCiudad)}
-                                                className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
-                                            >
-                                                <RiDeleteBin6Line className="text-xl" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                <AnimatePresence mode="popLayout">
+                                    {ciudades.map((ciudad) => (
+                                        <motion.tr
+                                            key={ciudad.IdCiudad}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -20 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {ciudad.Nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
+                                                    ciudad.Estado 
+                                                    ? 'bg-green-200 text-green-900 border-2 border-green-400' 
+                                                    : 'bg-red-200 text-red-900 border-2 border-red-400'
+                                                }`}>
+                                                    {ciudad.Estado ? 'Activa' : 'Inactiva'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end space-x-2">
+                                                    <LoadingButton
+                                                        onClick={() => {
+                                                            setEditingCiudad(ciudad);
+                                                            setShowForm(true);
+                                                        }}
+                                                        className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
+                                                        loading={loadingAction}
+                                                        title="Editar"
+                                                    >
+                                                        <RiEditLine className="text-xl" />
+                                                    </LoadingButton>
+                                                    <LoadingButton
+                                                        onClick={() => handleDelete(ciudad.IdCiudad)}
+                                                        className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
+                                                        loading={loadingAction}
+                                                        title="Eliminar"
+                                                    >
+                                                        <RiDeleteBin6Line className="text-xl" />
+                                                    </LoadingButton>
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
                             )}
                         </tbody>
                     </table>
@@ -246,19 +265,18 @@ const Ciudades = () => {
                         Mostrando {((pagination.currentPage - 1) * pagination.perPage) + 1} a {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} de {pagination.total} resultados
                     </div>
                     <div className="flex space-x-1">
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: 1 }))}
-                            disabled={pagination.currentPage === 1}
+                            disabled={pagination.currentPage === 1 || loading}
                             className={`px-3 py-1 rounded ${
                                 pagination.currentPage === 1
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loading}
                         >
                             «
-                        </motion.button>
+                        </LoadingButton>
 
                         {Array.from({ length: pagination.lastPage }, (_, i) => i + 1)
                             .filter(pageNum => {
@@ -276,35 +294,34 @@ const Ciudades = () => {
                                 }
 
                                 return (
-                                    <motion.button
+                                    <LoadingButton
                                         key={pageNum}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
+                                        disabled={loading}
                                         className={`px-3 py-1 rounded ${
                                             pagination.currentPage === pageNum
                                                 ? 'bg-vml-red text-white'
                                                 : 'bg-white text-gray-700 hover:bg-gray-50 border'
                                         }`}
+                                        loading={loading}
                                     >
                                         {pageNum}
-                                    </motion.button>
+                                    </LoadingButton>
                                 );
                             })}
 
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.lastPage }))}
-                            disabled={pagination.currentPage === pagination.lastPage}
+                            disabled={pagination.currentPage === pagination.lastPage || loading}
                             className={`px-3 py-1 rounded ${
                                 pagination.currentPage === pagination.lastPage
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loading}
                         >
                             »
-                        </motion.button>
+                        </LoadingButton>
                     </div>
                 </div>
             </div>

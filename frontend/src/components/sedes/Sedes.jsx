@@ -4,14 +4,16 @@ import { RiAddLine, RiSearchLine, RiEditLine, RiDeleteBin6Line, RiArrowUpSLine, 
 import Swal from 'sweetalert2';
 import SedeForm from './SedeForm';
 import axiosInstance from '../../utils/axiosConfig';
+import { LoadingOverlay, TableLoadingRow, EmptyRow, LoadingButton } from '../common/LoadingStates';
 
 const Sedes = () => {
     const [sedes, setSedes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingAction, setLoadingAction] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingSede, setEditingSede] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortField, setSortField] = useState('Sede.Nombre');
+    const [sortField, setSortField] = useState('Nombre');
     const [sortDirection, setSortDirection] = useState('asc');
     const [pagination, setPagination] = useState({
         currentPage: 1,
@@ -66,19 +68,20 @@ const Sedes = () => {
 
     const handleSubmit = async (formData) => {
         try {
+            setLoadingAction(true);
             if (editingSede) {
                 await axiosInstance.put(`/sedes/${editingSede.IdSede}`, formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Sede actualizada correctamente'
+                    title: 'Éxito',
+                    text: 'Sede actualizada exitosamente'
                 });
             } else {
                 await axiosInstance.post('/sedes', formData);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Sede creada correctamente'
+                    title: 'Éxito',
+                    text: 'Sede creada exitosamente'
                 });
             }
             setShowForm(false);
@@ -91,6 +94,8 @@ const Sedes = () => {
                 title: 'Error',
                 text: 'Hubo un error al procesar la solicitud'
             });
+        } finally {
+            setLoadingAction(false);
         }
     };
 
@@ -108,11 +113,12 @@ const Sedes = () => {
 
         if (result.isConfirmed) {
             try {
+                setLoadingAction(true);
                 await axiosInstance.delete(`/sedes/${id}`);
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Eliminado!',
-                    text: 'La sede ha sido eliminada'
+                    title: 'Éxito',
+                    text: 'Sede eliminada exitosamente'
                 });
                 fetchSedes();
             } catch (error) {
@@ -122,6 +128,8 @@ const Sedes = () => {
                     title: 'Error',
                     text: 'No se pudo eliminar la sede'
                 });
+            } finally {
+                setLoadingAction(false);
             }
         }
     };
@@ -137,18 +145,22 @@ const Sedes = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Gestión de Sedes</h1>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-vml-red text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    onClick={() => setShowForm(true)}
+                <LoadingButton
+                    onClick={() => {
+                        setEditingSede(null);
+                        setShowForm(true);
+                    }}
+                    className="bg-vml-red hover:bg-vml-red/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    loading={loadingAction}
                 >
                     <RiAddLine />
                     <span>Nueva Sede</span>
-                </motion.button>
+                </LoadingButton>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md mb-6">
+            <div className="bg-white rounded-lg shadow-md mb-6 relative">
+                {loadingAction && <LoadingOverlay message="Procesando..." />}
+                
                 <div className="p-4 border-b">
                     <div className="flex items-center space-x-2">
                         <RiSearchLine className="text-gray-400" />
@@ -158,6 +170,7 @@ const Sedes = () => {
                             className="w-full px-3 py-2 border-none focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
                 </div>
@@ -168,38 +181,38 @@ const Sedes = () => {
                             <tr>
                                 <th 
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('Sede.Nombre')}
+                                    onClick={() => handleSort('Nombre')}
                                 >
                                     <div className="flex items-center space-x-1">
                                         <span>Nombre</span>
-                                        <SortIcon field="Sede.Nombre" />
+                                        <SortIcon field="Nombre" />
                                     </div>
                                 </th>
                                 <th 
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('Empresa.Nombre')}
+                                    onClick={() => handleSort('Empresa')}
                                 >
                                     <div className="flex items-center space-x-1">
                                         <span>Empresa</span>
-                                        <SortIcon field="Empresa.Nombre" />
+                                        <SortIcon field="Empresa" />
                                     </div>
                                 </th>
                                 <th 
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('Ciudad.Nombre')}
+                                    onClick={() => handleSort('Ciudad')}
                                 >
                                     <div className="flex items-center space-x-1">
                                         <span>Ciudad</span>
-                                        <SortIcon field="Ciudad.Nombre" />
+                                        <SortIcon field="Ciudad" />
                                     </div>
                                 </th>
                                 <th 
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('Sede.Estado')}
+                                    onClick={() => handleSort('Estado')}
                                 >
                                     <div className="flex items-center space-x-1">
                                         <span>Estado</span>
-                                        <SortIcon field="Sede.Estado" />
+                                        <SortIcon field="Estado" />
                                     </div>
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -209,57 +222,63 @@ const Sedes = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-center">
-                                        Cargando...
-                                    </td>
-                                </tr>
+                                <TableLoadingRow colSpan={5} />
                             ) : sedes.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                                        No se encontraron sedes
-                                    </td>
-                                </tr>
+                                <EmptyRow colSpan={5} message="No se encontraron sedes" />
                             ) : (
-                                sedes.map((sede) => (
-                                    <tr key={sede.IdSede}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {sede.Nombre}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {sede.NombreEmpresa}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {sede.NombreCiudad}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
-                                                sede.Estado 
-                                                ? 'bg-green-200 text-green-900 border-2 border-green-400' 
-                                                : 'bg-red-200 text-red-900 border-2 border-red-400'
-                                            }`}>
-                                                {sede.Estado ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingSede(sede);
-                                                    setShowForm(true);
-                                                }}
-                                                className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
-                                            >
-                                                <RiEditLine className="text-xl" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(sede.IdSede)}
-                                                className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
-                                            >
-                                                <RiDeleteBin6Line className="text-xl" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                <AnimatePresence mode="popLayout">
+                                    {sedes.map((sede) => (
+                                        <motion.tr
+                                            key={sede.IdSede}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -20 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {sede.Nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {sede.Empresa?.Nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {sede.Ciudad?.Nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-4 py-2 inline-flex text-sm leading-5 font-bold rounded-lg ${
+                                                    sede.Estado 
+                                                    ? 'bg-green-200 text-green-900 border-2 border-green-400' 
+                                                    : 'bg-red-200 text-red-900 border-2 border-red-400'
+                                                }`}>
+                                                    {sede.Estado ? 'Activa' : 'Inactiva'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end space-x-2">
+                                                    <LoadingButton
+                                                        onClick={() => {
+                                                            setEditingSede(sede);
+                                                            setShowForm(true);
+                                                        }}
+                                                        className="p-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
+                                                        loading={loadingAction}
+                                                        title="Editar"
+                                                    >
+                                                        <RiEditLine className="text-xl" />
+                                                    </LoadingButton>
+                                                    <LoadingButton
+                                                        onClick={() => handleDelete(sede.IdSede)}
+                                                        className="p-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-colors duration-200"
+                                                        loading={loadingAction}
+                                                        title="Eliminar"
+                                                    >
+                                                        <RiDeleteBin6Line className="text-xl" />
+                                                    </LoadingButton>
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
                             )}
                         </tbody>
                     </table>
@@ -270,19 +289,18 @@ const Sedes = () => {
                         Mostrando {((pagination.currentPage - 1) * pagination.perPage) + 1} a {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} de {pagination.total} resultados
                     </div>
                     <div className="flex space-x-1">
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: 1 }))}
-                            disabled={pagination.currentPage === 1}
+                            disabled={pagination.currentPage === 1 || loading}
                             className={`px-3 py-1 rounded ${
                                 pagination.currentPage === 1
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loading}
                         >
                             «
-                        </motion.button>
+                        </LoadingButton>
 
                         {Array.from({ length: pagination.lastPage }, (_, i) => i + 1)
                             .filter(pageNum => {
@@ -300,35 +318,34 @@ const Sedes = () => {
                                 }
 
                                 return (
-                                    <motion.button
+                                    <LoadingButton
                                         key={pageNum}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
+                                        disabled={loading}
                                         className={`px-3 py-1 rounded ${
                                             pagination.currentPage === pageNum
                                                 ? 'bg-vml-red text-white'
                                                 : 'bg-white text-gray-700 hover:bg-gray-50 border'
                                         }`}
+                                        loading={loading}
                                     >
                                         {pageNum}
-                                    </motion.button>
+                                    </LoadingButton>
                                 );
                             })}
 
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <LoadingButton
                             onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.lastPage }))}
-                            disabled={pagination.currentPage === pagination.lastPage}
+                            disabled={pagination.currentPage === pagination.lastPage || loading}
                             className={`px-3 py-1 rounded ${
                                 pagination.currentPage === pagination.lastPage
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white text-gray-700 hover:bg-gray-50 border'
                             }`}
+                            loading={loading}
                         >
                             »
-                        </motion.button>
+                        </LoadingButton>
                     </div>
                 </div>
             </div>

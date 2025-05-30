@@ -7,6 +7,7 @@ use App\Http\Controllers\CiudadController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\EmpleadoController;
 
 Route::post('login', [AuthController::class, 'login']);
 
@@ -41,4 +42,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/areas/{id}', [AreaController::class, 'update']);
     Route::delete('/areas/{id}', [AreaController::class, 'destroy']);
     Route::get('/areas/sedes', [AreaController::class, 'getSedes']);
+    Route::get('/areas/sede/{idSede}', [AreaController::class, 'getAreasPorSede']);
+
+    // Rutas para Empleados
+    Route::get('/empleados', [EmpleadoController::class, 'index']);
+    Route::post('/empleados', [EmpleadoController::class, 'store']);
+    Route::put('/empleados/{id}', [EmpleadoController::class, 'update']);
+    Route::delete('/empleados/{id}', [EmpleadoController::class, 'destroy']);
+    Route::get('/empleados/tipos', [EmpleadoController::class, 'getTiposEmpleado']);
 }); 
